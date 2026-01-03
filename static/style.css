@@ -1,0 +1,22 @@
+body {
+    background: linear-gradient(120deg, #e0e7ff, #f8fafc);
+    min-height: 100vh;
+}
+
+.card {
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+h4 {
+    color: #1e3a8a;
+    font-weight: bold;
+}
+
+.btn {
+    border-radius: 8px;
+}
+
+.table {
+    background: white;
+}

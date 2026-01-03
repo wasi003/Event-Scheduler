@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4>Resource Allocations</h4>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Event</th>
+        <th>Resource</th>
+        <th>Type</th>
+    </tr>
+    {% for a in allocations %}
+    <tr>
+        <td>{{ a.event.title }}</td>
+        <td>{{ a.resource.resource_name }}</td>
+        <td>{{ a.resource.resource_type }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

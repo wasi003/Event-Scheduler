@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4>Add Resource</h4>
+<form method="post">
+    <input class="form-control mb-2" name="name" placeholder="Resource Name" required>
+    <input class="form-control mb-2" name="type" placeholder="Resource Type" required>
+    <button class="btn btn-success">Save</button>
+</form>
+{% endblock %}

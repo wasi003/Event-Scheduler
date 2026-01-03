@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<a href="/resources/add" class="btn btn-success btn-sm mb-2">Add Resource</a>
+<table class="table table-bordered">
+    <tr>
+        <th>Name</th>
+        <th>Type</th>
+    </tr>
+    {% for r in resources %}
+    <tr>
+        <td>{{ r.resource_name }}</td>
+        <td>{{ r.resource_type }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

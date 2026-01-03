@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4>Allocate Resource to Event</h4>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<form method="post">
+    <select name="event_id" class="form-control mb-2" required>
+        <option value="">Select Event</option>
+        {% for e in events %}
+        <option value="{{ e.event_id }}">{{ e.title }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="resource_id" class="form-control mb-2" required>
+        <option value="">Select Resource</option>
+        {% for r in resources %}
+        <option value="{{ r.resource_id }}">{{ r.resource_name }}</option>
+        {% endfor %}
+    </select>
+
+    <button class="btn btn-success">Allocate</button>
+</form>
+{% endblock %}

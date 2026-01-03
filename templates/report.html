@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h4>Resource Utilization Report</h4>
+
+<form method="post" class="row g-3 mb-3">
+    <div class="col-md-4">
+        <label>From Date</label>
+        <input type="date" name="start_date" class="form-control" required>
+    </div>
+
+    <div class="col-md-4">
+        <label>To Date</label>
+        <input type="date" name="end_date" class="form-control" required>
+    </div>
+
+    <div class="col-md-4 d-flex align-items-end">
+        <button class="btn btn-primary">Generate</button>
+    </div>
+</form>
+
+{% if report_data %}
+<table class="table table-bordered">
+    <tr>
+        <th>Resource</th>
+        <th>Type</th>
+        <th>Total Hours Used</th>
+        <th>No. of Bookings</th>
+        <th>Upcoming Bookings</th>
+    </tr>
+    {% for r in report_data %}
+    <tr>
+        <td>{{ r.name }}</td>
+        <td>{{ r.type }}</td>
+        <td>{{ r.hours }}</td>
+        <td>{{ r.bookings }}</td>
+        <td>{{ r.upcoming }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+{% endblock %}
