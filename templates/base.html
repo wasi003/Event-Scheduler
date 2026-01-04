@@ -14,6 +14,7 @@
     <div class="ms-auto">
         {% if session.get('user') %}
             <span class="text-white me-3">👤 {{ session['user'] }}</span>
+            <a href="/profile" class="btn btn-light btn-sm">Profile</a>
             <a href="/events" class="btn btn-light btn-sm">Events</a>
             <a href="/resources" class="btn btn-light btn-sm">Resources</a>
             <a href="/allocate" class="btn btn-warning btn-sm">Allocate</a>

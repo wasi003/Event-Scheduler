@@ -1,5 +1,5 @@
-from flask import Blueprint, jsonify
-from models import db, User, Event, EventAttendee
+from flask import Blueprint, jsonify, request, redirect, url_for, flash
+from models import db, User, Event, EventAttendee, Resource, EventResourceAllocation
 from utils.helpers import token_required, admin_required
 
 admin_bp = Blueprint('admin', __name__)
@@ -28,3 +28,34 @@ def get_stats():
         'events_by_category': dict(category_stats),
         'recent_events': [event.to_dict() for event in recent_events]
     }), 200
+
+
+@admin_bp.route('/clear-all-data', methods=['POST'])
+@token_required
+@admin_required
+def clear_all_data():
+    """
+    Clear all data from the database.
+    This endpoint is protected by token and admin requirements.
+    """
+    try:
+        # Delete all allocations first (due to foreign key constraints)
+        EventResourceAllocation.query.delete()
+        
+        # Delete all events, resources, and attendees
+        Event.query.delete()
+        Resource.query.delete()
+        EventAttendee.query.delete()
+        
+        # Commit the transaction
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'All data cleared successfully!'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'message': f'Error clearing data: {str(e)}'
+        }), 500

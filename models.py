@@ -34,6 +34,11 @@ class Event(db.Model):
     __tablename__ = 'events'
 
     event_id = db.Column(db.Integer, primary_key=True)
+    # Reference to the user who created the event
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=True)
+
+    # Relationship to easily access the owner
+    user = db.relationship('User', backref='events')
     title = db.Column(db.String(100), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)

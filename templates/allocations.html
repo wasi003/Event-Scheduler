@@ -1,19 +1,104 @@
 {% extends 'base.html' %}
 {% block content %}
-<h4>Resource Allocations</h4>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🔗 My Allocations</h2>
+    <a href="/events" class="btn btn-secondary">Back to Events</a>
+</div>
 
-<table class="table table-bordered">
-    <tr>
-        <th>Event</th>
-        <th>Resource</th>
-        <th>Type</th>
-    </tr>
-    {% for a in allocations %}
-    <tr>
-        <td>{{ a.event.title }}</td>
-        <td>{{ a.resource.resource_name }}</td>
-        <td>{{ a.resource.resource_type }}</td>
-    </tr>
-    {% endfor %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Allocation ID</th>
+            <th>Event</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Description</th>
+            <th>Resource</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="allocationsBody">
+    {% if allocations is defined %}
+        {% if allocations|length == 0 %}
+            <tr><td colspan="7" class="text-center">No allocations found.</td></tr>
+        {% else %}
+            {% for a in allocations %}
+            <tr>
+                <td>{{ a.allocation_id }}</td>
+                <td><a href="/events/{{ a.event.event_id }}">{{ a.event.title }}</a></td>
+                <td>{{ a.event.start_time.strftime('%Y-%m-%d %H:%M') if a.event and a.event.start_time }}</td>
+                <td>{{ a.event.end_time.strftime('%Y-%m-%d %H:%M') if a.event and a.event.end_time }}</td>
+                <td>{{ (a.event.description[:120] + '...') if a.event and a.event.description and a.event.description|length > 120 else (a.event.description or '') }}</td>
+                <td>{{ a.resource.resource_name }}</td>
+                <td>
+                    <form method="POST" action="/allocations/remove/{{ a.allocation_id }}" style="display:inline;" onsubmit="return confirm('Remove this allocation?');">
+                        <button class="btn btn-sm btn-danger" type="submit">Unallocate</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+    {% else %}
+        <tr><td colspan="7" class="text-center">Loading...</td></tr>
+    {% endif %}
+    </tbody>
 </table>
+
+{% if allocations is not defined %}
+<script>
+async function loadAllocations() {
+    try {
+        const res = await fetch('/api/events/allocations', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const data = await res.json();
+        const body = document.getElementById('allocationsBody');
+        body.innerHTML = '';
+        if (!data.allocations || data.allocations.length === 0) {
+            body.innerHTML = '<tr><td colspan="7" class="text-center">No allocations found.</td></tr>';
+            return;
+        }
+        data.allocations.forEach(a => {
+            const start = a.event_start ? new Date(a.event_start).toLocaleString() : '';
+            const end = a.event_end ? new Date(a.event_end).toLocaleString() : '';
+            const desc = a.event_description ? (a.event_description.length > 120 ? a.event_description.substring(0,120) + '...' : a.event_description) : '';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${a.allocation_id}</td>
+                <td><a href="/events/${a.event_id}">${a.event_title}</a></td>
+                <td>${start}</td>
+                <td>${end}</td>
+                <td>${desc}</td>
+                <td>${a.resource_name}</td>
+                <td><button class="btn btn-sm btn-danger" onclick="removeAllocation(${a.allocation_id})">Unallocate</button></td>
+            `;
+            body.appendChild(tr);
+        });
+    } catch (err) {
+        console.error(err);
+        alert('Failed to load allocations');
+    }
+}
+
+async function removeAllocation(id) {
+    if (!confirm('Remove this allocation?')) return;
+    try {
+        const res = await fetch('/api/events/allocations/' + id, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const data = await res.json();
+        alert(data.message || 'Operation complete');
+        loadAllocations();
+    } catch (err) {
+        console.error(err);
+        alert('Failed to remove allocation');
+    }
+}
+
+// load on page open
+loadAllocations();
+</script>
+{% endif %}
+
 {% endblock %}

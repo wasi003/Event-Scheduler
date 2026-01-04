@@ -188,6 +188,9 @@ def delete_event(event_id):
         return jsonify({'message': 'You can only delete your own events!'}), 403
 
     try:
+        # Remove any resource allocations tied to this event first
+        EventResourceAllocation.query.filter_by(event_id=event.event_id).delete()
+
         db.session.delete(event)
         db.session.commit()
         return jsonify({'message': 'Event deleted successfully!'}), 200
@@ -277,8 +280,8 @@ def allocate_resource(event_id):
         }), 400
 
     allocation = EventResourceAllocation(
-        event_id=event.id,
-        resource_id=resource.id
+        event_id=event.event_id,
+        resource_id=resource.resource_id
     )
 
     db.session.add(allocation)
@@ -289,3 +292,57 @@ def allocate_resource(event_id):
         'event': event.title,
         'resource': resource.name
     }), 200
+
+
+# =====================================================
+# LIST ALLOCATIONS (for events owned by current user)
+# =====================================================
+@events_bp.route('/allocations', methods=['GET'])
+@token_required
+def list_allocations():
+    try:
+        # allocations for events owned by the current user
+        allocations = EventResourceAllocation.query.join(Event).filter(Event.user_id == g.current_user.id).all()
+
+        data = []
+        for alloc in allocations:
+            event = Event.query.get(alloc.event_id)
+            resource = Resource.query.get(alloc.resource_id)
+            data.append({
+                'allocation_id': alloc.allocation_id,
+                'event_id': event.event_id if event else None,
+                'event_title': event.title if event else 'Deleted event',
+                'event_start': event.start_time.isoformat() if event and getattr(event, 'start_time', None) else None,
+                'event_end': event.end_time.isoformat() if event and getattr(event, 'end_time', None) else None,
+                'event_description': event.description if event and getattr(event, 'description', None) else None,
+                'resource_id': resource.resource_id if resource else None,
+                'resource_name': resource.resource_name if resource else 'Deleted resource',
+                'resource_type': resource.resource_type if resource and getattr(resource, 'resource_type', None) else None
+            })
+
+        return jsonify({'allocations': data}), 200
+
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+
+# =====================================================
+# DELETE AN ALLOCATION (unallocate a resource)
+# =====================================================
+@events_bp.route('/allocations/<int:alloc_id>', methods=['DELETE'])
+@token_required
+def delete_allocation(alloc_id):
+    allocation = EventResourceAllocation.query.get_or_404(alloc_id)
+    event = Event.query.get(allocation.event_id)
+
+    # Only the event owner or admin can remove an allocation
+    if event and event.user_id != g.current_user.id and not g.current_user.is_admin:
+        return jsonify({'message': 'You are not authorized to remove this allocation.'}), 403
+
+    try:
+        db.session.delete(allocation)
+        db.session.commit()
+        return jsonify({'message': 'Allocation removed successfully!'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': str(e)}), 500

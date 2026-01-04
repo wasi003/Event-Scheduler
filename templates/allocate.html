@@ -1,26 +1,99 @@
 {% extends 'base.html' %}
 {% block content %}
-<h4>Allocate Resource to Event</h4>
+<div class="container-fluid">
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">🔗 Allocate Resource to Event</h5>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
 
-{% if error %}
-<div class="alert alert-danger">{{ error }}</div>
-{% endif %}
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="event_id" class="form-label">Select Event</label>
+                            <select name="event_id" id="event_id" class="form-control" required>
+                                <option value="">-- Choose Event --</option>
+                                {% for e in events %}
+                                <option value="{{ e.event_id }}">{{ e.title }} ({{ e.start_time.strftime('%Y-%m-%d %H:%M') if e.start_time }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-<form method="post">
-    <select name="event_id" class="form-control mb-2" required>
-        <option value="">Select Event</option>
-        {% for e in events %}
-        <option value="{{ e.event_id }}">{{ e.title }}</option>
-        {% endfor %}
-    </select>
+                        <div class="mb-3">
+                            <label for="resource_id" class="form-label">Select Resource</label>
+                            <select name="resource_id" id="resource_id" class="form-control" required>
+                                <option value="">-- Choose Resource --</option>
+                                {% for r in resources %}
+                                <option value="{{ r.resource_id }}">{{ r.resource_name }} ({{ r.resource_type }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-    <select name="resource_id" class="form-control mb-2" required>
-        <option value="">Select Resource</option>
-        {% for r in resources %}
-        <option value="{{ r.resource_id }}">{{ r.resource_name }}</option>
-        {% endfor %}
-    </select>
+                        <button type="submit" class="btn btn-success w-100">✓ Allocate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
 
-    <button class="btn btn-success">Allocate</button>
-</form>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">📊 Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Total Events:</strong> {{ events|length }}</p>
+                    <p><strong>Total Resources:</strong> {{ resources|length }}</p>
+                    <p><strong>Total Allocations:</strong> <span id="allocCount">{{ allocations|length }}</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">📋 Current Allocations</h3>
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Event</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Description</th>
+                        <th>Resource</th>
+                        <th>Type</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="allocationsBody">
+                    {% if allocations|length == 0 %}
+                        <tr><td colspan="8" class="text-center text-muted">No allocations yet. Create one using the form above!</td></tr>
+                    {% else %}
+                        {% for a in allocations %}
+                        <tr>
+                            <td>{{ a.allocation_id }}</td>
+                            <td><strong>{{ a.event.title }}</strong></td>
+                            <td>{{ a.event.start_time.strftime('%Y-%m-%d %H:%M') if a.event and a.event.start_time }}</td>
+                            <td>{{ a.event.end_time.strftime('%Y-%m-%d %H:%M') if a.event and a.event.end_time }}</td>
+                            <td>{{ (a.event.description[:80] + '...') if a.event and a.event.description and a.event.description|length > 80 else (a.event.description or '') }}</td>
+                            <td>{{ a.resource.resource_name }}</td>
+                            <td><span class="badge bg-secondary">{{ a.resource.resource_type }}</span></td>
+                            <td>
+                                <form method="POST" action="/allocations/remove/{{ a.allocation_id }}" style="display:inline;" onsubmit="return confirm('Remove this allocation?');">
+                                    <button class="btn btn-sm btn-danger" type="submit">🗑️ Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
